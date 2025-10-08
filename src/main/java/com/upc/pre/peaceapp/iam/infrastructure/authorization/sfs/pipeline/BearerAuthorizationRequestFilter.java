@@ -36,16 +36,20 @@ public class BearerAuthorizationRequestFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = tokenService.getBearerTokenFrom(request);
-            LOGGER.info("Token: {}", token);
-            if (token != null && tokenService.validateToken(token)) {
+            if (token == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            if (tokenService.validateToken(token)) {
                 String username = tokenService.getUsernameFromToken(token);
                 var userDetails = userDetailsService.loadUserByUsername(username);
                 SecurityContextHolder.getContext()
-                        .setAuthentication(UsernamePasswordAuthenticationTokenBuilder
-                                .build(userDetails, request));
+                        .setAuthentication(UsernamePasswordAuthenticationTokenBuilder.build(userDetails, request));
             } else {
-                LOGGER.info("Token is not valid");
+                LOGGER.warn("Invalid or expired token");
             }
+
         } catch (Exception e) {
             LOGGER.error("Cannot set user authentication: {}", e.getMessage());
         }
