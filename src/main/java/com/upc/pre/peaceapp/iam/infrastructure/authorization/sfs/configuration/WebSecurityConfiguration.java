@@ -32,13 +32,22 @@ public class WebSecurityConfiguration {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .formLogin(form -> form.disable())  // 🔥 evita redirección a /login
+                .formLogin(form -> form.disable())  // evita redirección a /login
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("api/v1/authentication/sign-in", "api/v1/authentication/sign-up").permitAll()
+                        .requestMatchers(
+                                "/api/v1/authentication/sign-in",
+                                "/api/v1/authentication/sign-up",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 );
 
+        // 🔐 Filtro JWT
         http.addFilterBefore(
                 new BearerAuthorizationRequestFilter(tokenService, userDetailsService),
                 UsernamePasswordAuthenticationFilter.class
